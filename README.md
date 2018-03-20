@@ -1,43 +1,103 @@
+Project 6: Particle Systems
+=============================
 
-# Project 6: Particle System
+The Most Ugly Dungeon Ever. It has some interesting things though!
 
-**Goal:** to make physics-based procedural animation of particles and to practice using OpenGL's instanced rendering system.
+![](images/img_1.png)
 
-**Inspiration:** DMD and CGGT alumnus Nop Jiarathanakul's [Particle Dream application](http://www.iamnop.com/particles/).
+[Demo Link](https://vasumahesh1.github.io/ParticleSystem_WebGL/)
 
-## Particle collection (30 points)
-Add whatever code you feel is necessary to your Typescript files to support a collection of particles that move over time and interact with various forces in the environment. Something like a `Particle` class could be helpful, but is not strictly necessary. At minimum, each particle should track position, velocity, and acceleration, and make use of an accurate time step value from within `main.ts`'s `tick()` function. You may use any integration method you see fit, such as Euler, Verlet, or Runge-Kutta.
+## Particle System
 
-You'll probably want to test your code on a small set of particles at first, and with some simple directional forces just to make sure your particles move
-as expected.
+Unlike the demo, my particle system has a TTL (Time to Live) for each particle.
 
-## Procedural coloration and shaping of particles (15 points)
-Your particles' colors should be determined in some procedural manner, whether it's based on velocity, time, position, or distance to target point. Your particle coloration scheme should follow one of the color palette techniques discussed in Tuesday's class so that your particle collection seems coherently colored. The shape of your particles may be whatever you wish (you're not limited to the basic gradiated circle we provided in the base code). You can even use a texture on your particle surface if you wish. Feel free to set up another instanced data VBO to vary the shape of your particles within the same scene.
+This is the structure of a particle state:
+```typescript
+class ParticleState {
+  position: vec4;
+  orient: vec4;
+  color: vec4;
+  scale: vec3;
+  destination: vec4;
 
-## Interactive forces (25 points)
-Allow the user to click on the scene to attract and repel particles from the cursor (consider ray-casting from the clicked point to place a 3D point in the scene from which particles can flee or move towards).
+  velocity: vec4;
+  ttl: number;
+  lifetime: number;
+  mesh: string;
 
-You might also consider allowing the user the option of activating "force fields", i.e. invisible 3D noise functions that act as forces on the particles as they move through the scene. You might even consider implementing something like [curl noise](https://petewerner.blogspot.com/2015/02/intro-to-curl-noise.html) to move your particles. Creating a visualization of these fields by drawing small `GL_LINES` in the direction of the force every N units in the world may be helpful for determining if your code works as expected.
+  sourcePosition: vec4;
+  colorGradient: any;
+}
+```
 
-## Mesh surface attraction (20 points)
-Give the user the option of selecting a mesh from a drop-down menu in your GUI and have a subset of your particles become attracted to points on the surface of the mesh. To start, try just having each vertex on the mesh attract one unique particle in your collection. For extra credit, try generating points on the surfaces of the mesh faces that will attract more particles. Consider this method of warping a 2D point with X, Y values in the range [0, 1) to the barycentric coordinates (u, v) of any arbitrary triangle:
+Particles are colored and shaped based on the TTL and Lifetime. There is a custom color gradient per `ParticleSource`.
 
-`(u, v) = (1 - sqrt(x), y * sqrt(x))`
+A `ParticleSystem` consists of `ParticleSource`s, `ParticleAttractor`s, `ParticleRepulsor`s.
 
-You can map these (u, v) coordinates to a point on any triangle using this method from `Physically Based Rendering From Theory to Implementation, Third Edition`'s chapter on triangle meshes:
+A `MeshParticleSystem` is a particle system where the attractors are the verticles.
 
-![](pbrt.jpg)
+A Torch is made by combining such systems together. There are 3 different torches on the scene. One on the walls and others on the floor.
 
-Consider pre-generating these mesh attractor points at load time so your program runs in real time as you swap out meshes.
 
-## \~\*\~\*\~A E S T H E T I C\~\*\~\*\~ (10 points)
-As always, the artistic merit of your project plays a small role in your grade. The more interesting, varied, and procedural your project is, the higher your grade will be. Go crazy, make it vaporwave themed or something! Don't neglect the background of your scene; a static gray backdrop is pretty boring!
+## Interactivity
 
-## Extra credit (50 points max)
-* (5 - 15 points) Allow the user to place attractors and repulsors in the scene that influence the motion of the particles. The more variations of influencers you add, the more points you'll receive. Consider adding influencers that do not act uniformly in all directions, or that are not simply points in space but volumes. They should be visible in the scene in some manner.
-* (7 points) Have particles stretch along their velocity vectors to imitate motion blur.
-* (5 - 15 points) Allow particles to collide with and bounce off of obstacles in the scene. The more complex the shapes you collide particles with, the more points you'll earn.
-* (30 points) Animate a mesh and have the particles move along with the animation.
-* (15 points) Create a "flocking" mode for your scene where a smaller collection of particles moves around the environment following the [rules for flocking](https://en.wikipedia.org/wiki/Boids).
-* (15 points) Use audio to drive an attribute of your particles, whether that be color, velocity, size, shape, or something else!
-* (50 points) Create a cloth simulation mode for your scene where you attach particles to each other in a grid using infinitely stiff springs, and perform relaxation iterations over the grid each tick.
+Use your Mouse and Keyboard keys to change the scene.
+
+`A` : Adds a temporary attractive force to move particles to where your mouse is.
+
+`S` : Adds a temporary repulsive force to move particles to where your mouse is.
+
+`D` : Adds a source for emitting particles for the TargetMesh (The mesh to which the particles get attracted to) in the scene.
+
+There are some more keys but they are explained below in more detailed.
+
+
+## Mesh surface attraction
+
+There is a predefined 'Gem' on the scene. To which the particles get attracted to.
+
+I didn't add a dropdown, as I felt my scene needed this as a default. I had other plans to include the gem as a proper 3d mesh and use a sphere maybe surrounding it, but couldn't get time.
+
+
+## EC: Interactive Mesh Attractors
+
+Interactively you can also place a Sphere Mesh based on where your mouse is using the `F` key.
+
+This will cause the existing sources to randomly send particles to the new Mesh along with the Gem.
+
+
+## EC: Music
+
+I used HTML5 audio capabilities to get frequency data. MDN has an interesting article on how to make visualizations using Audio. I used the same principle to extract audio information.
+
+If the audio frequency (average) is high, the torches emit Blue Flames instead of red. Also, the torches become dim, if the music is on a lower note / frequency.
+
+
+## EC ? : Custom Particle Effect
+
+`༼ つ o_o ༽つ`
+
+I had a flame simulation with an Orb on top of the flame. The Orb caused the flame partciles to travese around it rather than through it. It obtained a nice effect.
+
+This can be extended to other objects as long as we can mathematically represent the surface.
+
+![](images/img_2.png)
+
+
+## Note:
+
+I tried to build a dungeon with torches emitting fire particles. Guess it turned out too heavy for the CPU side for simulating the particles. I tried instancing the flame particles (they are instanced currently) on the CPU side, meaning I share the same flame simulation per torch. Even, after that it turned out to be quite heavy.
+
+The profiler says that the main issue is the VBO creation for the Particles. There were a couple of other design choices I thought, but couldn't do it in time.
+
+So, ideally the initial couple of minutes will run fine, then for some reason it starts to lag and FPS might drop a bit.
+
+## Improving Performance:
+
+One way I see to improve performance is to use web workers which will parallelize the simulation. Also a better vbo for particles where I don't recreate the instanced position and just merely edit them, but this has to account for the TTL of dead particles etc.
+
+## References:
+
+- [BDcraft Minecraft Textures](bdcraft.net)
+- [Audio Visualization](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Visualizations_with_Web_Audio_API)
+- [Gem Mesh](https://free3d.com/3d-model/colored-diamonds-84118.html)
